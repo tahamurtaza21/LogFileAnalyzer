@@ -7,10 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 public class Main {
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException, URISyntaxException, ExecutionException, InterruptedException {
 
         ConcurrentHashMap<String, Integer> sharedMap = new ConcurrentHashMap<String,Integer>();
 
@@ -20,7 +20,22 @@ public class Main {
         List<String> allContent1 = Files.readAllLines(path1, StandardCharsets.UTF_8);
         List<String> allContent2 = Files.readAllLines(path2, StandardCharsets.UTF_8);
 
-        System.out.println(CountLogWords(allContent1, sharedMap));
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        Future<ConcurrentHashMap<String, Integer>> future1 = executor.submit(() -> CountLogWords(allContent1, sharedMap));
+        Future<ConcurrentHashMap<String, Integer>> future2 = executor.submit(() -> CountLogWords(allContent2, sharedMap));
+
+        future1.get();
+        future2.get();
+
+        executor.shutdown();
+
+//        CountLogWords(allContent1, sharedMap);
+//        System.out.println(CountLogWords(allContent2, sharedMap));
+
+        System.out.println(sharedMap);
+
+
     }
 
     private static ConcurrentHashMap<String, Integer> CountLogWords(List<String> allContent1, ConcurrentHashMap<String, Integer> sharedMap) {
